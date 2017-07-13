@@ -5,12 +5,12 @@
 # TODO(eernst) implement: Rewrite this to a Dart script, make is not available
 # on all platforms.
 
-RTOOLS=../reflectable/tool
-TTOOLS=../test_reflectable/tool
+PACKAGE_ROOT=../packages
+OPTIONS=--checked --package-root=$(PACKAGE_ROOT)
+TEST_DIR=../test
+XFORM_DIR=../test/to_be_transformed
 
-all_except_bottest: get check build test
-
-all: get check build full_test
+all: get check build test
 
 g: get
 
@@ -18,47 +18,25 @@ u: upgrade
 
 c: check
 
-m: measure_output
-
 b: build
 
 t: test
 
-bt: bot_test
-
-ft: full_test
-
 get:
-	@./makein Getting $(RTOOLS) get
-	@./makein Getting $(TTOOLS) get
+	( cd ..; pub get --no-packages-dir )
 
 upgrade:
-	@./makein Getting $(RTOOLS) upgrade
-	@./makein Getting $(TTOOLS) upgrade
+	( cd ..; pub upgrade --no-packages-dir )
 
 check:
-	@./makein Checking $(RTOOLS) check
-	@./makein Checking $(TTOOLS) check
-	@./grep_debug
-	@./grep_todos --check-consistency
-	@./grep_todos --find-unknown-category
-
-measure_output:
-	@./makein Measuring $(TTOOLS) measure_output
+	( cd ..; dartanalyzer `find test lib -name \*.dart` )
 
 build:
-	@./makein Building $(RTOOLS) build
-	@./makein Building $(TTOOLS) build
+	( cd ..; pub build --mode=debug test )
 
 test:
-	@./makein Testing $(RTOOLS) test
-	@./makein Testing $(TTOOLS) test
+	@echo "-------------------- mock_tests"
+	@./run_mock_tests
 
-bot_test:
-	@echo '------------------- bottest'
-	./bottest
+.PHONY: all g u c b t ft get upgrade check build test
 
-full_test: test bot_test
-
-.PHONY: all_except_bottest all g u c b t ft get upgrade check build test
-.PHONY: bot_test full_test measure_output
